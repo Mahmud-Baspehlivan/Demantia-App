@@ -1,0 +1,246 @@
+[
+  {
+    "documents": [
+      {
+        "age_range": "50-59",
+        "gender": ["Kadın", "Erkek"],
+        "group_name": "50-59 Yaş Grubu",
+        "cognitive_status": ["Normal", "MCI"],
+        "occupation_level": ["Düşük", "Orta", "Yüksek"],
+        "risk_factors": ["Düşük", "Orta", "Yüksek"],
+        "social_activity": ["Aktif", "Pasif"],
+        "id": "50-59 Yaş Grubu",
+        "education_levels": ["İlkokul ve altı", "Lise", "Üniversite"]
+      },
+      {
+        "age_range": "60-69",
+        "gender": ["Kadın", "Erkek"],
+        "group_name": "60-69 Yaş Grubu",
+        "cognitive_status": ["MCI", "Erken Evre Demans"],
+        "occupation_level": ["Düşük", "Orta", "Yüksek"],
+        "risk_factors": ["Düşük", "Orta", "Yüksek"],
+        "social_activity": ["Aktif", "Pasif"],
+        "id": "60-69 Yaş Grubu",
+        "education_levels": ["İlkokul ve altı", "Lise", "Üniversite"]
+      },
+      {
+        "age_range": "70-79",
+        "gender": ["Kadın", "Erkek"],
+        "group_name": "70-79 Yaş Grubu",
+        "cognitive_status": ["MCI", "Erken Evre Demans", "Orta Demans"],
+        "occupation_level": ["Düşük", "Orta", "Yüksek"],
+        "risk_factors": ["Düşük", "Orta", "Yüksek"],
+        "social_activity": ["Aktif", "Pasif"],
+        "id": "70-79 Yaş Grubu",
+        "education_levels": ["İlkokul ve altı", "Lise", "Üniversite"]
+      },
+      {
+        "age_range": "80+",
+        "gender": ["Kadın", "Erkek"],
+        "group_name": "80+ Yaş Grubu",
+        "cognitive_status": [
+          "Erken Evre Demans",
+          "Orta Demans",
+          "İleri Demans"
+        ],
+        "occupation_level": ["Düşük", "Orta", "Yüksek"],
+        "risk_factors": ["Düşük", "Orta", "Yüksek"],
+        "social_activity": ["Aktif", "Pasif"],
+        "id": "80+ Yaş Grubu",
+        "education_levels": ["İlkokul ve altı", "Lise", "Üniversite"]
+      }
+    ],
+    "collection_name": "demans_groups"
+  },
+  {
+    "documents": [
+      {
+        "max_age": 80,
+        "difficulty_level": "easy",
+        "risk_category": "medium",
+        "education_level": "lise",
+        "id": "example_assignment",
+        "min_age": 60,
+        "priority_level": 1,
+        "question_id": "example_question"
+      }
+    ],
+    "collection_name": "question_assignment"
+  },
+  {
+    "documents": [
+      {
+        "question_text": "Aşağıdaki sağlık durumlarından herhangi birine sahipseniz işaretleyiniz.",
+        "difficulty_level": "medium",
+        "question_type": "multiple_select",
+        "options": [
+          "Hipertansiyon",
+          "Diyabet",
+          "Ailede demans öyküsü",
+          "Felç",
+          "APOE4 geni taşıyıcılığı"
+        ],
+        "related_group": "risk_factors",
+        "id": "15Grgbn6hbeqjKTTvjUx",
+        "category": "medical"
+      },
+      {
+        "question_text": "Eğitim seviyeniz nedir?",
+        "difficulty_level": "easy",
+        "question_type": "multiple_choice",
+        "options": ["İlkokul veya daha az", "Lise", "Üniversite ve üstü"],
+        "related_group": "education_levels",
+        "id": "4MbjPStT9fZGT457PA8h",
+        "category": "education"
+      },
+      {
+        "question_text": "Son 6 ay içinde aşağıdaki durumlardan herhangi birini yaşadınız mı?",
+        "difficulty_level": "medium",
+        "question_type": "multiple_select",
+        "options": [
+          "Yeni bilgileri hatırlamakta zorluk çekiyorum",
+          "Rutin görevleri yapmakta zorlanıyorum",
+          "Konuşurken kelimeleri unutuyorum",
+          "Tanıdık yerlere giderken yönümü kaybediyorum",
+          "Günlük olayları hatırlamakta sorun yaşıyorum"
+        ],
+        "related_group": "cognitive_status",
+        "id": "G9WhPtHM4aq0gjoyfSI3",
+        "category": "cognitive_status"
+      },
+      {
+        "question_text": "Cinsiyetinizi belirtiniz.",
+        "difficulty_level": "easy",
+        "question_type": "multiple_choice",
+        "options": ["Kadın", "Erkek"],
+        "related_group": "gender",
+        "id": "VdXdbXnN4xaQ2iLAQYb9",
+        "category": "demographic"
+      },
+      {
+        "question_text": "Günlük yaşamınızda aşağıdaki aktivitelerden hangilerini yapıyorsunuz?",
+        "difficulty_level": "medium",
+        "question_type": "multiple_select",
+        "options": [
+          "Haftada en az 3 gün düzenli egzersiz yapıyorum",
+          "Haftada en az 3 kez sosyal gruplarla buluşuyorum",
+          "Günde en az 30 dakika kitap/gazete okuyorum",
+          "Haftada birkaç kez yeni şeyler öğrenmeye çalışıyorum",
+          "Çoğunlukla yalnız vakit geçiriyorum"
+        ],
+        "related_group": "social_activity",
+        "id": "WiplkjEOmIUJo431BA2M",
+        "category": "social_activity"
+      },
+      {
+        "question_text": "Çalışma hayatınızda hangi tür aktivitelerle daha çok uğraştınız?",
+        "difficulty_level": "medium",
+        "question_type": "multiple_choice",
+        "options": [
+          "Fiziksel iş gerektiren meslekler",
+          "Orta düzey zihinsel aktivite gerektiren işler",
+          "Yüksek düzeyde zihinsel aktivite gerektiren işler"
+        ],
+        "related_group": "occupation_level",
+        "id": "YLjQDaCsMxv2veOPKhTP",
+        "category": "occupation"
+      },
+      {
+        "question_text": "Son 6 ay içinde unutkanlık yaşadınız mı?",
+        "difficulty_level": "easy",
+        "followup_question_id": null,
+        "question_type": "multiple_choice",
+        "options": {
+          "1": "Evet",
+          "2": "Hayır"
+        },
+        "id": "example_question",
+        "category": "memory"
+      },
+      {
+        "question_text": "Kaç yaşındasınız?",
+        "difficulty_level": "easy",
+        "question_type": "multiple_choice",
+        "options": ["50-59", "60-69", "70-79", "80+"],
+        "related_group": "age_range",
+        "id": "zqNygV5n3CktVs0665PQ",
+        "category": "demographic"
+      }
+    ],
+    "collection_name": "questions"
+  },
+  {
+    "documents": [
+      {
+        "score_weight": 2.5,
+        "test_session_id": "example_test_session",
+        "response": {
+          "answer": "Evet"
+        },
+        "patient_id": "example_patient",
+        "id": "example_response",
+        "question_id": "example_question",
+        "timestamp": {
+          "seconds": 1740646606,
+          "nanos": 982000000
+        }
+      }
+    ],
+    "collection_name": "test_responses"
+  },
+  {
+    "documents": [
+      {
+        "doctor_comments": "Hastanın durumu iyi, ancak düzenli izlenmeli.",
+        "risk_level": "low",
+        "test_session_id": "example_test_session",
+        "patient_id": "example_patient",
+        "recommendation": "Takip önerilir",
+        "id": "example_test_result",
+        "overall_score": 85
+      }
+    ],
+    "collection_name": "test_results"
+  },
+  {
+    "documents": [
+      {
+        "score": null,
+        "doctor_id": "example_doctor",
+        "start_time": {
+          "seconds": 1740646606,
+          "nanos": 720000000
+        },
+        "patient_id": "example_patient",
+        "result_summary": null,
+        "end_time": null,
+        "recommendation": null,
+        "id": "example_test_session",
+        "status": "in_progress"
+      }
+    ],
+    "collection_name": "test_sessions"
+  },
+  {
+    "documents": [
+      {
+        "role": "doctor",
+        "name": "Dr. Örnek",
+        "id": "example_doctor",
+        "email": "doktor@example.com"
+      },
+      {
+        "risk_category": "medium",
+        "role": "patient",
+        "gender": "male",
+        "cognitive_status": "MCI",
+        "name": "Hasta Örneği",
+        "education_level": "university",
+        "id": "example_patient",
+        "email": "hasta@example.com",
+        "age": 65
+      }
+    ],
+    "collection_name": "users"
+  }
+]
