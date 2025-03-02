@@ -18,6 +18,17 @@ public class PatientController {
     @Autowired
     private PatientService patientService;
 
+    @GetMapping
+    public ResponseEntity<List<Patient>> getAllPatients() {
+        try {
+            List<Patient> patients = patientService.getAllPatients();
+            return new ResponseEntity<>(patients, HttpStatus.OK);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Patient> getPatientById(@PathVariable String id) {
         try {
@@ -27,17 +38,6 @@ public class PatientController {
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Patient>> getAllPatients() {
-        try {
-            List<Patient> patients = patientService.getAllPatients();
-            return new ResponseEntity<>(patients, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -68,7 +68,7 @@ public class PatientController {
 
     @GetMapping("/age-range")
     public ResponseEntity<List<Patient>> getPatientsByAgeRange(
-            @RequestParam int minAge, @RequestParam int maxAge) {
+            @RequestParam("min") int minAge, @RequestParam("max") int maxAge) {
         try {
             List<Patient> patients = patientService.getPatientsByAgeRange(minAge, maxAge);
             return new ResponseEntity<>(patients, HttpStatus.OK);
@@ -92,8 +92,22 @@ public class PatientController {
     @PostMapping
     public ResponseEntity<String> createPatient(@RequestBody Patient patient) {
         try {
+            // Ensure role is patient
+            patient.setRole("patient");
+
             String id = patientService.createPatient(patient);
             return new ResponseEntity<>(id, HttpStatus.CREATED);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/{id}/assess-risk")
+    public ResponseEntity<String> assessRiskCategory(@PathVariable String id) {
+        try {
+            patientService.updateRiskCategory(id);
+            return new ResponseEntity<>("Risk category updated", HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -103,20 +117,14 @@ public class PatientController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updatePatient(@PathVariable String id, @RequestBody Patient patient) {
         try {
+            // Set the id from path variable
             patient.setId(id);
+
+            // Ensure role remains patient
+            patient.setRole("patient");
+
             String result = patientService.updatePatient(patient);
             return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping("/{id}/assess-risk")
-    public ResponseEntity<String> assessAndUpdateRiskCategory(@PathVariable String id) {
-        try {
-            patientService.updateRiskCategory(id);
-            return new ResponseEntity<>("Risk category updated", HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

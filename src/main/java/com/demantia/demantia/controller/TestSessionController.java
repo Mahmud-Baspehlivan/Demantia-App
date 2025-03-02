@@ -17,12 +17,23 @@ import java.util.concurrent.ExecutionException;
 public class TestSessionController {
 
     @Autowired
-    private TestSessionService testSessionService;
+    private TestSessionService sessionService;
+
+    @GetMapping
+    public ResponseEntity<List<TestSession>> getAllSessions() {
+        try {
+            List<TestSession> sessions = sessionService.getAllSessions();
+            return new ResponseEntity<>(sessions, HttpStatus.OK);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<TestSession> getSessionById(@PathVariable String id) {
         try {
-            TestSession session = testSessionService.getSessionById(id);
+            TestSession session = sessionService.getSessionById(id);
             if (session != null) {
                 return new ResponseEntity<>(session, HttpStatus.OK);
             } else {
@@ -34,21 +45,10 @@ public class TestSessionController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<List<TestSession>> getAllSessions() {
-        try {
-            List<TestSession> sessions = testSessionService.getAllSessions();
-            return new ResponseEntity<>(sessions, HttpStatus.OK);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<TestSession>> getSessionsByPatientId(@PathVariable String patientId) {
         try {
-            List<TestSession> sessions = testSessionService.getSessionsByPatientId(patientId);
+            List<TestSession> sessions = sessionService.getSessionsByPatientId(patientId);
             return new ResponseEntity<>(sessions, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -56,22 +56,15 @@ public class TestSessionController {
         }
     }
 
-    @GetMapping("/doctor/{doctorId}")
-    public ResponseEntity<List<TestSession>> getSessionsByDoctorId(@PathVariable String doctorId) {
+    @GetMapping("/patient/{patientId}/active")
+    public ResponseEntity<TestSession> getActiveSessionForPatient(@PathVariable String patientId) {
         try {
-            List<TestSession> sessions = testSessionService.getSessionsByDoctorId(doctorId);
-            return new ResponseEntity<>(sessions, HttpStatus.OK);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<TestSession>> getSessionsByStatus(@PathVariable String status) {
-        try {
-            List<TestSession> sessions = testSessionService.getSessionsByStatus(status);
-            return new ResponseEntity<>(sessions, HttpStatus.OK);
+            TestSession session = sessionService.getActiveSessionForPatient(patientId);
+            if (session != null) {
+                return new ResponseEntity<>(session, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -81,7 +74,7 @@ public class TestSessionController {
     @GetMapping("/patient/{patientId}/completed")
     public ResponseEntity<List<TestSession>> getCompletedSessionsByPatientId(@PathVariable String patientId) {
         try {
-            List<TestSession> sessions = testSessionService.getCompletedSessionsByPatientId(patientId);
+            List<TestSession> sessions = sessionService.getCompletedSessionsByPatientId(patientId);
             return new ResponseEntity<>(sessions, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -92,7 +85,7 @@ public class TestSessionController {
     @GetMapping("/patient/{patientId}/latest")
     public ResponseEntity<TestSession> getLatestSessionByPatientId(@PathVariable String patientId) {
         try {
-            TestSession session = testSessionService.getLatestSessionByPatientId(patientId);
+            TestSession session = sessionService.getLatestSessionByPatientId(patientId);
             if (session != null) {
                 return new ResponseEntity<>(session, HttpStatus.OK);
             } else {
@@ -104,33 +97,22 @@ public class TestSessionController {
         }
     }
 
-    @GetMapping("/patient/{patientId}/active")
-    public ResponseEntity<TestSession> getActiveSessionForPatient(@PathVariable String patientId) {
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<TestSession>> getSessionsByDoctorId(@PathVariable String doctorId) {
         try {
-            TestSession session = testSessionService.getActiveSessionForPatient(patientId);
-            if (session != null) {
-                return new ResponseEntity<>(session, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+            List<TestSession> sessions = sessionService.getSessionsByDoctorId(doctorId);
+            return new ResponseEntity<>(sessions, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping("/{id}/duration")
-    public ResponseEntity<Long> getSessionDuration(@PathVariable String id) {
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<TestSession>> getSessionsByStatus(@PathVariable String status) {
         try {
-            TestSession session = testSessionService.getSessionById(id);
-            if (session == null) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            long duration = testSessionService.calculateSessionDurationSeconds(session);
-            if (duration < 0) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            return new ResponseEntity<>(duration, HttpStatus.OK);
+            List<TestSession> sessions = sessionService.getSessionsByStatus(status);
+            return new ResponseEntity<>(sessions, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -140,7 +122,7 @@ public class TestSessionController {
     @PostMapping
     public ResponseEntity<String> createSession(@RequestBody TestSession session) {
         try {
-            String id = testSessionService.createSession(session);
+            String id = sessionService.createSession(session);
             return new ResponseEntity<>(id, HttpStatus.CREATED);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -149,18 +131,49 @@ public class TestSessionController {
     }
 
     @PostMapping("/with-questions")
-    public ResponseEntity<String> createSessionWithQuestions(@RequestBody Map<String, Object> requestBody) {
+    public ResponseEntity<String> createSessionWithQuestions(@RequestBody Map<String, Object> request) {
         try {
-            String patientId = (String) requestBody.get("patient_id");
-            String doctorId = (String) requestBody.get("doctor_id");
+            String patientId = (String) request.get("patientId");
+            String doctorId = (String) request.get("doctorId");
             @SuppressWarnings("unchecked")
-            List<String> questionIds = (List<String>) requestBody.get("question_ids");
+            List<String> questionIds = (List<String>) request.get("questionIds");
 
-            String sessionId = testSessionService.createSessionWithQuestions(patientId, doctorId, questionIds);
+            String sessionId = sessionService.createSessionWithQuestions(patientId, doctorId, questionIds);
             return new ResponseEntity<>(sessionId, HttpStatus.CREATED);
-        } catch (Exception e) {
+        } catch (ExecutionException | InterruptedException | IllegalArgumentException e) {
             e.printStackTrace();
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<String> completeSession(@PathVariable String id) {
+        try {
+            String result = sessionService.completeSession(id);
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (ExecutionException | InterruptedException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{id}/duration")
+    public ResponseEntity<Long> getSessionDuration(@PathVariable String id) {
+        try {
+            TestSession session = sessionService.getSessionById(id);
+            if (session != null) {
+                long duration = sessionService.calculateSessionDurationSeconds(session);
+                if (duration >= 0) {
+                    return new ResponseEntity<>(duration, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                }
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -168,18 +181,7 @@ public class TestSessionController {
     public ResponseEntity<String> updateSession(@PathVariable String id, @RequestBody TestSession session) {
         try {
             session.setId(id);
-            String result = testSessionService.updateSession(session);
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping("/{id}/complete")
-    public ResponseEntity<String> completeSession(@PathVariable String id) {
-        try {
-            String result = testSessionService.completeSession(id);
+            String result = sessionService.updateSession(session);
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -190,7 +192,7 @@ public class TestSessionController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteSession(@PathVariable String id) {
         try {
-            String result = testSessionService.deleteSession(id);
+            String result = sessionService.deleteSession(id);
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();

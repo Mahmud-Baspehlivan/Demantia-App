@@ -66,10 +66,10 @@ public class QuestionController {
         }
     }
 
-    @GetMapping("/difficulty/{level}")
-    public ResponseEntity<List<Question>> getQuestionsByDifficultyLevel(@PathVariable String level) {
+    @GetMapping("/difficulty/{difficultyLevel}")
+    public ResponseEntity<List<Question>> getQuestionsByDifficultyLevel(@PathVariable String difficultyLevel) {
         try {
-            List<Question> questions = questionService.getQuestionsByDifficultyLevel(level);
+            List<Question> questions = questionService.getQuestionsByDifficultyLevel(difficultyLevel);
             return new ResponseEntity<>(questions, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();

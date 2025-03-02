@@ -19,6 +19,17 @@ public class TestResultController {
     @Autowired
     private TestResultService testResultService;
 
+    @GetMapping
+    public ResponseEntity<List<TestResult>> getAllTestResults() {
+        try {
+            List<TestResult> results = testResultService.getAllTestResults();
+            return new ResponseEntity<>(results, HttpStatus.OK);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TestResult> getTestResultById(@PathVariable String id) {
         try {
@@ -28,17 +39,6 @@ public class TestResultController {
             } else {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping
-    public ResponseEntity<List<TestResult>> getAllTestResults() {
-        try {
-            List<TestResult> results = testResultService.getAllTestResults();
-            return new ResponseEntity<>(results, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -94,18 +94,14 @@ public class TestResultController {
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<String> generateTestResult(@RequestBody Map<String, String> requestBody) {
+    public ResponseEntity<String> generateTestResult(@RequestBody Map<String, String> request) {
         try {
-            String sessionId = requestBody.get("session_id");
-            String patientId = requestBody.get("patient_id");
+            String sessionId = request.get("sessionId");
+            String patientId = request.get("patientId");
 
-            if (sessionId == null || patientId == null) {
-                return new ResponseEntity<>("Session ID and Patient ID are required", HttpStatus.BAD_REQUEST);
-            }
-
-            String id = testResultService.generateTestResult(sessionId, patientId);
-            return new ResponseEntity<>(id, HttpStatus.CREATED);
-        } catch (Exception e) {
+            String resultId = testResultService.generateTestResult(sessionId, patientId);
+            return new ResponseEntity<>(resultId, HttpStatus.CREATED);
+        } catch (ExecutionException | InterruptedException | IllegalArgumentException e) {
             e.printStackTrace();
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

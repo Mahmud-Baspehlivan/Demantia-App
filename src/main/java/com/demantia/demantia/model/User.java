@@ -12,4 +12,5 @@ public class User {
     private String name;
     private String email;
     private String role; // "doctor", "patient", vb.
+    private String firebaseUid; // Firebase Auth UID
 }

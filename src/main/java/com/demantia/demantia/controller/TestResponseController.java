@@ -19,6 +19,17 @@ public class TestResponseController {
     @Autowired
     private TestResponseService testResponseService;
 
+    @GetMapping
+    public ResponseEntity<List<TestResponse>> getAllResponses() {
+        try {
+            List<TestResponse> responses = testResponseService.getAllResponses();
+            return new ResponseEntity<>(responses, HttpStatus.OK);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TestResponse> getResponseById(@PathVariable String id) {
         try {
@@ -83,17 +94,6 @@ public class TestResponseController {
         }
     }
 
-    @GetMapping("/session/{sessionId}/scores")
-    public ResponseEntity<Map<String, Double>> getCategoryScores(@PathVariable String sessionId) {
-        try {
-            Map<String, Double> scores = testResponseService.calculateCategoryScores(sessionId);
-            return new ResponseEntity<>(scores, HttpStatus.OK);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @PostMapping
     public ResponseEntity<String> createResponse(@RequestBody TestResponse response) {
         try {
@@ -106,24 +106,30 @@ public class TestResponseController {
     }
 
     @PostMapping("/with-scoring")
-    public ResponseEntity<String> createResponseWithScoring(
-            @RequestBody Map<String, Object> requestBody) {
+    public ResponseEntity<String> createResponseWithScoring(@RequestBody Map<String, Object> request) {
         try {
-            String questionId = (String) requestBody.get("question_id");
-            String testSessionId = (String) requestBody.get("test_session_id");
-            String patientId = (String) requestBody.get("patient_id");
-            String answer = (String) requestBody.get("answer");
-
             TestResponse response = new TestResponse();
-            response.setQuestion_id(questionId);
-            response.setTest_session_id(testSessionId);
-            response.setPatient_id(patientId);
+            response.setTest_session_id((String) request.get("test_session_id"));
+            response.setPatient_id((String) request.get("patient_id"));
+            response.setQuestion_id((String) request.get("question_id"));
+            String answer = (String) request.get("answer");
 
             String id = testResponseService.createResponseWithScoring(response, answer);
             return new ResponseEntity<>(id, HttpStatus.CREATED);
-        } catch (Exception e) {
+        } catch (ExecutionException | InterruptedException | IllegalArgumentException e) {
             e.printStackTrace();
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/session/{sessionId}/scores")
+    public ResponseEntity<Map<String, Double>> calculateCategoryScores(@PathVariable String sessionId) {
+        try {
+            Map<String, Double> categoryScores = testResponseService.calculateCategoryScores(sessionId);
+            return new ResponseEntity<>(categoryScores, HttpStatus.OK);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

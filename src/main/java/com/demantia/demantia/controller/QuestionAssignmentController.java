@@ -1,9 +1,7 @@
 package com.demantia.demantia.controller;
 
 import com.demantia.demantia.model.QuestionAssignment;
-import com.demantia.demantia.model.Patient;
 import com.demantia.demantia.service.QuestionAssignmentService;
-import com.demantia.demantia.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,14 +12,22 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/question-assignments")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") // Flutter uygulaması için tüm originlere izin ver
 public class QuestionAssignmentController {
 
     @Autowired
     private QuestionAssignmentService assignmentService;
 
-    @Autowired
-    private PatientService patientService;
+    @GetMapping
+    public ResponseEntity<List<QuestionAssignment>> getAllAssignments() {
+        try {
+            List<QuestionAssignment> assignments = assignmentService.getAllAssignments();
+            return new ResponseEntity<>(assignments, HttpStatus.OK);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<QuestionAssignment> getAssignmentById(@PathVariable String id) {
@@ -38,10 +44,10 @@ public class QuestionAssignmentController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<List<QuestionAssignment>> getAllAssignments() {
+    @GetMapping("/session/{sessionId}")
+    public ResponseEntity<List<QuestionAssignment>> getAssignmentsBySessionId(@PathVariable String sessionId) {
         try {
-            List<QuestionAssignment> assignments = assignmentService.getAllAssignments();
+            List<QuestionAssignment> assignments = assignmentService.getAssignmentsBySessionId(sessionId);
             return new ResponseEntity<>(assignments, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -60,7 +66,7 @@ public class QuestionAssignmentController {
         }
     }
 
-    @GetMapping("/difficulty-level/{difficultyLevel}")
+    @GetMapping("/difficulty/{difficultyLevel}")
     public ResponseEntity<List<QuestionAssignment>> getAssignmentsByDifficultyLevel(
             @PathVariable String difficultyLevel) {
         try {
@@ -72,7 +78,7 @@ public class QuestionAssignmentController {
         }
     }
 
-    @GetMapping("/education-level/{educationLevel}")
+    @GetMapping("/education/{educationLevel}")
     public ResponseEntity<List<QuestionAssignment>> getAssignmentsByEducationLevel(
             @PathVariable String educationLevel) {
         try {
@@ -99,33 +105,6 @@ public class QuestionAssignmentController {
     public ResponseEntity<List<QuestionAssignment>> getAssignmentsForAgeGroup(@PathVariable int age) {
         try {
             List<QuestionAssignment> assignments = assignmentService.getAssignmentsForAgeGroup(age);
-            return new ResponseEntity<>(assignments, HttpStatus.OK);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<QuestionAssignment>> getAssignmentsForPatient(@PathVariable String patientId) {
-        try {
-            Patient patient = patientService.getPatientById(patientId);
-            if (patient == null) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
-            List<QuestionAssignment> assignments = assignmentService.getAssignmentsForPatient(patient);
-            return new ResponseEntity<>(assignments, HttpStatus.OK);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/session/{testSessionId}")
-    public ResponseEntity<List<QuestionAssignment>> getAssignmentsBySessionId(@PathVariable String testSessionId) {
-        try {
-            List<QuestionAssignment> assignments = assignmentService.getAssignmentsBySessionId(testSessionId);
             return new ResponseEntity<>(assignments, HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
