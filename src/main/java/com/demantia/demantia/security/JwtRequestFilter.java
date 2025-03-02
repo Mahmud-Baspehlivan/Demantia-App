@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Base64;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -33,14 +32,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // Bazı endpointleri filtreden muaf tut
         if ((path != null && (path.startsWith("/api/auth/") || path.startsWith("/api/public/")))) {
-            System.out.println("DEBUG: Bypassing JWT filter for path: " + path);
             chain.doFilter(request, response);
             return;
         }
 
         final String requestTokenHeader = request.getHeader("Authorization");
-        System.out.println("DEBUG: Processing request: " + path + " | Auth header: "
-                + (requestTokenHeader != null ? requestTokenHeader : "Not present"));
 
         String username = null;
         String jwtToken = null;
@@ -49,34 +45,27 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
             try {
-                // Debug için token yapısını göster
-                debugJwtToken(jwtToken);
-
                 username = jwtTokenUtil.getUsernameFromToken(jwtToken);
-                System.out.println("DEBUG: Extracted username from token: " + username);
             } catch (IllegalArgumentException e) {
-                System.out.println("DEBUG: Unable to get JWT Token: " + e.getMessage());
+                logger.error("Unable to get JWT Token");
             } catch (ExpiredJwtException e) {
-                System.out.println("DEBUG: JWT Token has expired: " + e.getMessage());
+                logger.error("JWT Token has expired");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("{\"error\":\"JWT token expired\",\"message\":\"Token has expired\"}");
                 return;
             } catch (Exception e) {
-                System.out.println("DEBUG: Error processing token: " + e.getMessage());
-                e.printStackTrace();
+                logger.error("Error processing token", e);
             }
         } else {
-            System.out.println("DEBUG: JWT Token does not begin with Bearer String or is missing");
+            logger.debug("JWT Token does not begin with Bearer String or is missing");
         }
 
         // SecurityContext'te kimlik doğrulaması yapılmamışsa yap
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
-                System.out.println("DEBUG: Loading UserDetails for: " + username);
                 UserDetails userDetails = this.jwtUserDetailsService.loadUserByUsername(username);
 
                 // Token geçerliyse Spring Security konfigürasyonu
-                System.out.println("DEBUG: Validating token for user: " + username);
                 if (jwtTokenUtil.validateToken(jwtToken, userDetails)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
@@ -85,42 +74,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
                     // Kimlik doğrulama bilgisini SecurityContext'e yerleştir
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("DEBUG: Authentication successful for: " + username + " with authorities: " +
-                            userDetails.getAuthorities());
-                } else {
-                    System.out.println("DEBUG: Token validation failed for: " + username);
                 }
             } catch (Exception e) {
-                System.out.println("DEBUG: Authentication error: " + e.getMessage());
-                e.printStackTrace();
+                logger.error("Authentication error", e);
             }
         }
 
         chain.doFilter(request, response);
-    }
-
-    /**
-     * Debug için JWT token yapısını göster
-     */
-    private void debugJwtToken(String token) {
-        try {
-            System.out.println("DEBUG: Analyzing token: " + token.substring(0, Math.min(20, token.length())) + "...");
-
-            // Token'ı parçalara ayır
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                System.out.println("DEBUG: Invalid token structure - expected 3 parts but found " + parts.length);
-                return;
-            }
-
-            // Header ve payload'ı decode et
-            String decodedHeader = new String(Base64.getDecoder().decode(parts[0]));
-            String decodedPayload = new String(Base64.getDecoder().decode(parts[1]));
-
-            System.out.println("DEBUG: Token header: " + decodedHeader);
-            System.out.println("DEBUG: Token payload: " + decodedPayload);
-        } catch (Exception e) {
-            System.out.println("DEBUG: Error analyzing token: " + e.getMessage());
-        }
     }
 }

@@ -12,9 +12,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class JwtTokenUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenUtil.class);
 
     // JWT token geçerlilik süresi (saniye)
     @Value("${jwt.expiration:86400}")
@@ -29,7 +33,7 @@ public class JwtTokenUtil {
         try {
             return getClaimFromToken(token, Claims::getSubject);
         } catch (Exception e) {
-            System.out.println("Error extracting username from token: " + e.getMessage());
+            logger.error("Error extracting username from token", e);
             throw e;
         }
     }
@@ -43,12 +47,9 @@ public class JwtTokenUtil {
     public boolean validateToken(String token, UserDetails userDetails) {
         try {
             final String username = getUsernameFromToken(token);
-            boolean isValid = (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-            System.out.println("Token validation - Username match: " + username.equals(userDetails.getUsername()) +
-                    ", Not expired: " + !isTokenExpired(token));
-            return isValid;
+            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
         } catch (Exception e) {
-            System.out.println("Token validation error: " + e.getMessage());
+            logger.error("Token validation error", e);
             return false;
         }
     }
@@ -67,7 +68,7 @@ public class JwtTokenUtil {
             final Claims claims = getAllClaimsFromToken(token);
             return claimsResolver.apply(claims);
         } catch (Exception e) {
-            System.out.println("Error getting claims from token: " + e.getMessage());
+            logger.error("Error getting claims from token", e);
             throw e;
         }
     }
@@ -81,19 +82,19 @@ public class JwtTokenUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            System.out.println("JWT token expired: " + e.getMessage());
+            logger.error("JWT token expired");
             throw e;
         } catch (MalformedJwtException e) {
-            System.out.println("Malformed JWT token: " + e.getMessage());
+            logger.error("Malformed JWT token");
             throw e;
         } catch (UnsupportedJwtException e) {
-            System.out.println("Unsupported JWT token: " + e.getMessage());
+            logger.error("Unsupported JWT token");
             throw e;
         } catch (IllegalArgumentException e) {
-            System.out.println("JWT token compact of handler are invalid: " + e.getMessage());
+            logger.error("JWT token compact of handler are invalid");
             throw e;
         } catch (Exception e) {
-            System.out.println("Unexpected error parsing JWT token: " + e.getMessage());
+            logger.error("Unexpected error parsing JWT token", e);
             throw e;
         }
     }
@@ -102,13 +103,9 @@ public class JwtTokenUtil {
     private Boolean isTokenExpired(String token) {
         try {
             final Date expiration = getExpirationDateFromToken(token);
-            boolean isExpired = expiration.before(new Date());
-            if (isExpired) {
-                System.out.println("Token expired. Expiration: " + expiration + ", Current: " + new Date());
-            }
-            return isExpired;
+            return expiration.before(new Date());
         } catch (Exception e) {
-            System.out.println("Error checking token expiration: " + e.getMessage());
+            logger.error("Error checking token expiration", e);
             return true; // Hata durumunda tokenı expired olarak kabul et
         }
     }
@@ -119,26 +116,18 @@ public class JwtTokenUtil {
         Date issuedAt = new Date(currentTimeMillis);
         Date expiryDate = new Date(currentTimeMillis + expiration * 1000);
 
-        System.out.println("Generating token for subject: " + subject);
-        System.out.println("Token issued at: " + issuedAt);
-        System.out.println("Token expiry: " + expiryDate);
-
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(issuedAt)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
-
-        System.out.println("Generated token: " + token.substring(0, Math.min(10, token.length())) + "...");
-        return token;
     }
 
     // İmzalama anahtarını oluşturan metod
     private Key getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        System.out.println("Secret key length: " + keyBytes.length + " bytes");
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

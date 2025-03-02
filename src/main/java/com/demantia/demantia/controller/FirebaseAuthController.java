@@ -3,6 +3,8 @@ package com.demantia.demantia.controller;
 import com.demantia.demantia.security.FirebaseAuthService;
 import com.demantia.demantia.security.JwtResponse;
 import com.google.firebase.auth.FirebaseAuthException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 public class FirebaseAuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(FirebaseAuthController.class);
 
     @Autowired
     private FirebaseAuthService firebaseAuthService;
@@ -26,28 +30,19 @@ public class FirebaseAuthController {
                 return ResponseEntity.badRequest().body("Firebase token is required");
             }
 
-            System.out.println("Received firebase token: "
-                    + firebaseToken.substring(0, Math.min(10, firebaseToken.length())) + "...");
-
             JwtResponse jwtResponse = firebaseAuthService.verifyFirebaseTokenAndCreateJwt(firebaseToken);
-            System.out.println("Generated JWT: "
-                    + jwtResponse.getToken().substring(0, Math.min(10, jwtResponse.getToken().length())) + "...");
-            System.out.println("User role: " + jwtResponse.getRole());
-            System.out.println("User ID: " + jwtResponse.getId());
-
             return ResponseEntity.ok(jwtResponse);
         } catch (FirebaseAuthException e) {
-            System.out.println("Firebase auth error: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Firebase authentication failed", e);
             return ResponseEntity.status(401).body("Firebase authentication failed: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Server error: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Server error during authentication", e);
             return ResponseEntity.status(500).body("Server error: " + e.getMessage());
         }
     }
 
-    // Manuel JWT doğrulama endpointi (test için)
+    // Manuel JWT doğrulama endpointi (test için) - prodüksiyon öncesi
+    // kaldırılabilir
     @GetMapping("/verify")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization") String authHeader) {
         try {
@@ -56,12 +51,12 @@ public class FirebaseAuthController {
             }
 
             String token = authHeader.substring(7);
-            System.out.println("Manually verifying token: " + token.substring(0, Math.min(10, token.length())) + "...");
 
             // Token bilgilerini döndür
             Map<String, String> response = new HashMap<>();
             response.put("message", "Token is valid");
-            response.put("token", token);
+            // Güvenlik için tokenı geri yansıtma
+            // response.put("token", token);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {

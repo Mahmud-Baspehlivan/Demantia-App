@@ -5,11 +5,15 @@ import com.demantia.demantia.security.JwtRequest;
 import com.demantia.demantia.security.JwtResponse;
 import com.demantia.demantia.security.JwtTokenUtil;
 import com.demantia.demantia.security.JwtUserDetailsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,48 +21,50 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
     @Autowired
-    private JwtUserDetailsService jwtUserDetailsService;
+    private JwtUserDetailsService userDetailsService;
 
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) {
         try {
-            System.out.println("=== LOGIN ATTEMPT ===");
-            System.out.println("Username: " + authenticationRequest.getUsername());
+            logger.info("Login attempt for user: {}", authenticationRequest.getUsername());
 
-            // Step 1: Authenticate user - bypassed for testing
+            // Step 1: Authenticate user
             authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 
             // Step 2: Load user details
-            UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-            System.out.println("User loaded: " + userDetails.getUsername());
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
 
             // Step 3: Get user information
-            User user = jwtUserDetailsService.getUserByEmail(authenticationRequest.getUsername());
+            User user = userDetailsService.getUserByEmail(authenticationRequest.getUsername());
             if (user == null) {
+                logger.error("User data could not be retrieved for: {}", authenticationRequest.getUsername());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("User data could not be retrieved");
             }
-            System.out.println("User found: " + user.getName() + " (Role: " + user.getRole() + ")");
 
             // Step 4: Generate token
-            String token = jwtTokenUtil.generateToken(userDetails, user.getId(), user.getRole());
-            System.out.println("Token generated successfully");
+            final String token = jwtTokenUtil.generateToken(userDetails, user.getId(), user.getRole());
+            logger.info("Token generated for user: {}", authenticationRequest.getUsername());
 
             // Step 5: Return response
             return ResponseEntity.ok(new JwtResponse(token, user.getRole(), user.getId()));
         } catch (Exception e) {
-            System.err.println("Authentication error: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Authentication error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Authentication failed: " + e.getMessage()));
+                    .body(Map.of("error", "Authentication failed"));
         }
     }
 
@@ -70,24 +76,18 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Kullanıcı adı ve şifre ile kimlik doğrulama yapar
+     */
     private void authenticate(String username, String password) throws Exception {
         try {
-            System.out.println("TEST MODE: Authentication bypass enabled - all passwords accepted");
-
-            // Username check only
-            UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(username);
-            if (userDetails == null) {
-                throw new BadCredentialsException("Invalid username");
-            }
-
-            // Skip password validation for testing
-            // Real implementation would use AuthenticationManager here
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         } catch (DisabledException e) {
             throw new Exception("USER_DISABLED", e);
         } catch (BadCredentialsException e) {
             throw new Exception("INVALID_CREDENTIALS", e);
         } catch (Exception e) {
-            throw new Exception("AUTHENTICATION_ERROR: " + e.getMessage(), e);
+            throw new Exception("AUTHENTICATION_ERROR", e);
         }
     }
 }
