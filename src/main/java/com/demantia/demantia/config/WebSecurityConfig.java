@@ -33,6 +33,12 @@ public class WebSecurityConfig {
         @Autowired
         private JwtRequestFilter jwtRequestFilter;
 
+        public static final String[] SWAGGER_UI_PATH = {
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui.html"
+        };
+
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http
@@ -45,10 +51,7 @@ public class WebSecurityConfig {
                                                 .permitAll()
 
                                                 // Swagger UI ve API dokümantasyon sayfalarına erişime izin ver
-                                                .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**"))
-                                                .permitAll()
-                                                .requestMatchers(new AntPathRequestMatcher("/v3/api-docs/**"))
-                                                .permitAll()
+                                                .requestMatchers(SWAGGER_UI_PATH).permitAll()
 
                                                 // Diğer tüm isteklerin kimlik doğrulaması yapılmış olması gerekir
                                                 .anyRequest().authenticated())
@@ -85,7 +88,7 @@ public class WebSecurityConfig {
 
         @Bean
         public PasswordEncoder passwordEncoder() {
-                // Test için NoOpPasswordEncoder yerine güvenli BCryptPasswordEncoder kullan
+
                 return new BCryptPasswordEncoder();
         }
 
